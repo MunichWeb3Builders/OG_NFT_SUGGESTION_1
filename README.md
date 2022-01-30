@@ -9,6 +9,7 @@ The community has decided on the following specifications for the OG NFT:
 - The whitelist should be editable
 - The NFT contract should be able to pause and allow the transfer of NFTs
 - All NFTs share the same meta data
+- Each NFT should have a unique ID
 
 ## Project overview
 - hardhat.config: config file for hardhat which is a tool to deploy and test smart contracts
