@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract MunichWeb3Builders is
     ERC721,
@@ -14,7 +16,26 @@ contract MunichWeb3Builders is
     Ownable,
     ERC721Burnable
 {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIdCounter;
+    // dummy merkleRoot value
+    bytes32 public merkleRoot =
+        0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8;
+    mapping(address => bool) public whitelistClaimed;
+
     constructor() ERC721("Munich Web3 Builders", "MWeb3B") {}
+
+    function whitelistMint(bytes32[] calldata _merkleProof) public {
+        require(!whitelistClaimed[msg.sender], "Address has already claimed");
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+        require(
+            MerkleProof.verify(_merkleProof, merkleRoot, leaf),
+            "Proof invalid."
+        );
+        whitelistClaimed[msg.sender] = true;
+
+        safeMint(msg.sender);
+    }
 
     function pause() public onlyOwner {
         _pause();
@@ -24,7 +45,9 @@ contract MunichWeb3Builders is
         _unpause();
     }
 
-    function safeMint(address to, uint256 tokenId) public onlyOwner {
+    function safeMint(address to) public onlyOwner {
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
         _safeMint(to, tokenId);
     }
 
