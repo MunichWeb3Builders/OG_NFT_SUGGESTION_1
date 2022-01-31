@@ -25,7 +25,11 @@ contract MunichWeb3Builders is
 
     constructor() ERC721("Munich Web3 Builders Early Member", "W3B_OG") {}
 
-    function whitelistMint(bytes32[] calldata _merkleProof) public {
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://";
+    }
+
+    function mintNFT(bytes32[] calldata _merkleProof) public {
         require(!whitelistClaimed[msg.sender], "Address has already claimed");
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(
@@ -36,6 +40,10 @@ contract MunichWeb3Builders is
 
         // _setTokenURI(newItemId, tokenURI);
         safeMint(msg.sender);
+    }
+
+    function updateMerkleRoot(bytes32 newMerkleRoot) public onlyOwner {
+        merkleRoot = newMerkleRoot;
     }
 
     function pause() public onlyOwner {
