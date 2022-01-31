@@ -23,7 +23,7 @@ contract MunichWeb3Builders is
         0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8;
     mapping(address => bool) public whitelistClaimed;
 
-    constructor() ERC721("Munich Web3 Builders", "MWeb3B") {}
+    constructor() ERC721("Munich Web3 Builders Early Member", "W3B_OG") {}
 
     function whitelistMint(bytes32[] calldata _merkleProof) public {
         require(!whitelistClaimed[msg.sender], "Address has already claimed");
@@ -34,6 +34,7 @@ contract MunichWeb3Builders is
         );
         whitelistClaimed[msg.sender] = true;
 
+        // _setTokenURI(newItemId, tokenURI);
         safeMint(msg.sender);
     }
 
