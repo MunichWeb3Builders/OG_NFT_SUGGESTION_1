@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Base64} from "./Base64.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract MunichWeb3Builders is
@@ -18,18 +20,36 @@ contract MunichWeb3Builders is
 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
+
+    using Base64 for bytes;
+
+    using Strings for uint256;
+
     // dummy merkleRoot value
-    bytes32 public merkleRoot =
-        0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8;
+    bytes32 public merkleRoot;
     mapping(address => bool) public whitelistClaimed;
 
-    constructor() ERC721("Munich Web3 Builders Early Member", "W3B_OG") {}
+    string public imageIPFShash;
+    string public animationIPFShash;
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "https://";
+    constructor(
+        string memory _imageIPFShash,
+        string memory _animationIPFShash,
+        bytes32 _merkleRoot
+    ) ERC721("Munich Web3 Builders Early Member", "W3B_OG") {
+        imageIPFShash = _imageIPFShash;
+        animationIPFShash = _animationIPFShash;
+        merkleRoot = _merkleRoot;
     }
 
-    function mintNFT(bytes32[] calldata _merkleProof) public {
+    // function setImageIPFShash(string calldata _imageIPFShash)
+    //     external
+    //     onlyOwner
+    // {
+    //     imageIPFShash = _imageIPFShash;
+    // }
+
+    function claim(bytes32[] calldata _merkleProof) external {
         require(!whitelistClaimed[msg.sender], "Address has already claimed");
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(
@@ -38,19 +58,40 @@ contract MunichWeb3Builders is
         );
         whitelistClaimed[msg.sender] = true;
 
-        // _setTokenURI(newItemId, tokenURI);
         safeMint(msg.sender);
     }
 
-    function updateMerkleRoot(bytes32 newMerkleRoot) public onlyOwner {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        string memory json = abi
+            .encodePacked(
+                '{"name": "OG Badge #',
+                tokenId.toString(),
+                '",',
+                '"description": "This token represents proof of early member status of the Web3 Builders Munich community.", "image": "ipfs://',
+                imageIPFShash,
+                '", "animation_url": "ipfs://',
+                animationIPFShash,
+                '"}'
+            )
+            .encode(); // this encodes to Base64
+
+        return string(abi.encodePacked("data:application/json;base64,", json));
+    }
+
+    function updateMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
         merkleRoot = newMerkleRoot;
     }
 
-    function pause() public onlyOwner {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
