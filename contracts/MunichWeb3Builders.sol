@@ -25,28 +25,27 @@ contract MunichWeb3Builders is
 
     using Strings for uint256;
 
-    // dummy merkleRoot value
     bytes32 public merkleRoot;
     mapping(address => bool) public whitelistClaimed;
 
-    string public imageIPFShash;
-    string public animationIPFShash;
+    string public imageCID;
+    string public animationCID;
 
     constructor(
-        string memory _imageIPFShash,
-        string memory _animationIPFShash,
+        string memory _imageCID,
+        string memory _animationCID,
         bytes32 _merkleRoot
     ) ERC721("Munich Web3 Builders Early Member", "W3B_OG") {
-        imageIPFShash = _imageIPFShash;
-        animationIPFShash = _animationIPFShash;
+        imageCID = _imageCID;
+        animationCID = _animationCID;
         merkleRoot = _merkleRoot;
     }
 
-    // function setImageIPFShash(string calldata _imageIPFShash)
+    // function setImageCID(string calldata _imageCID)
     //     external
     //     onlyOwner
     // {
-    //     imageIPFShash = _imageIPFShash;
+    //     imageCID = _imageCID;
     // }
 
     function claim(bytes32[] calldata _merkleProof) external {
@@ -73,9 +72,9 @@ contract MunichWeb3Builders is
                 tokenId.toString(),
                 '",',
                 '"description": "This token represents proof of early member status of the Web3 Builders Munich community.", "image": "ipfs://',
-                imageIPFShash,
+                imageCID,
                 '", "animation_url": "ipfs://',
-                animationIPFShash,
+                animationCID,
                 '"}'
             )
             .encode(); // this encodes to Base64
@@ -95,7 +94,7 @@ contract MunichWeb3Builders is
         _unpause();
     }
 
-    function safeMint(address to) public onlyOwner {
+    function safeMint(address to) private {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
