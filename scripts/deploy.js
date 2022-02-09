@@ -11,7 +11,7 @@ const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 dotenv.config();
 
-const whitelistAddresses = [
+const ALLOW_LIST = [
     '0xB4599439114a6a814218254008ed5c60D0d8049d'
 ]
 
@@ -40,15 +40,15 @@ async function uploadData() {
 
 
 async function main() {
-    // let's first create some random address
-    const whitelist = Array.from(Array(10).keys()).map(_ => ethers.Wallet.createRandom().address)
+    // let's first create some random addresses
+    const allowList = Array.from(Array(10).keys()).map(_ => ethers.Wallet.createRandom().address)
     // add my own account for testing:
     const account = await ethers.getSigner()
     const myAddress = account.address
     console.log(myAddress);
-    whitelist.push(myAddress)
+    allowList.push(myAddress)
 
-    const leafNodes = whitelist.map(addr => keccak256(addr))
+    const leafNodes = allowList.map(addr => keccak256(addr))
     const merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
     const merkleRoot = merkleTree.getRoot()
 
@@ -56,29 +56,29 @@ async function main() {
 
     const { imageCID, animationCID } = await uploadData()
 
-    const Contract = await ethers.getContractFactory('MunichWeb3Builders');
-    const contract = await Contract.deploy(imageCID, animationCID, merkleRoot);
+    const MunichWeb3BuildersContract = await ethers.getContractFactory('MunichWeb3Builders');
+    const munichWeb3BuildersContract = await MunichWeb3BuildersContract.deploy(imageCID, animationCID, merkleRoot);
 
-    await contract.deployed();
+    await munichWeb3BuildersContract.deployed();
 
-    console.log(`deployed to:`, contract.address);
+    console.log(`deployed to:`, munichWeb3BuildersContract.address);
 
     // this should not work
     // this is a new address which is not whitelisted
     // (also the TX is send from my acc so shoulnd't work anyway)
     const bAddress = ethers.Wallet.createRandom()
     try {
-        const bTX = await contract.claim(merkleTree.getHexProof(bAddress))
+        const bTX = await munichWeb3BuildersContract.claim(merkleTree.getHexProof(bAddress))
         await bTX.wait()
     } catch (error) {
         console.log("failed succesfully");
     }
 
     // this should work
-    const gTX = await contract.claim(merkleTree.getHexProof(keccak256(myAddress)))
+    const gTX = await munichWeb3BuildersContract.claim(merkleTree.getHexProof(keccak256(myAddress)))
     await gTX.wait()
 
-    const tokenURI = await contract.tokenURI(1)
+    const tokenURI = await munichWeb3BuildersContract.tokenURI(0)
     console.log(tokenURI);
 }
 
